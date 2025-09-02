@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container" style="min-height: 64vh;">
+    <div class="form-card mx-auto p-4 shadow mt-5">
+        <h3 class="text-center mb-4 titulo-form">Inicio Sesión</h3>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row g-3">
+
+                <div class="col-12">
+                    <label for="usuario" class="form-label">Usuario</label>
+                    <input type="text" name="usuario" id="usuario" class="form-control border-black">
+                </div>
+
+                <div class="col-12">
+                    <label for="contrasena" class="form-label">Contraseña</label>
+                    <input type="password" name="contrasena" id="contrasena" class="form-control border-black">
+                </div>
+
+                <div class="col-12 d-flex justify-content-center">
+                    <button type="submit" class="btn btn-success px-5">Iniciar Sesión</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    {% if login_error %}
+        Swal.fire({
+            icon: 'error',
+            title: 'Credenciales incorrectas',
+            text: 'Por favor verifica tu usuario y contraseña.'
+        });
+    {% elif login_success %}
+        Swal.fire({
+            icon: 'success',
+            title: 'Bienvenido',
+            text: 'Inicio de sesión exitoso',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            window.location.href = "{% url 'listadoComites' %}";
+        });
+    {% endif %}
+</script>
+
+{% endblock %}

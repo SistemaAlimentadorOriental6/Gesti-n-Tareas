@@ -1,0 +1,35 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg header-cont">
+    <div class="container-fluid d-flex align-items-center">
+
+        <!-- Logo -->
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <img src="{% static 'img/retoñoblanco.png' %}" alt="Logo" class="logo-header">
+        </a>
+
+        <!-- Botón hamburguesa -->
+        <button class="navbar-toggler icono-header ms-auto" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Título (visible en todas las resoluciones, centrado) -->
+        <div class="titulo-header mx-auto">
+            <h1 class="mb-0">Gestión de Tareas</h1>
+        </div>
+
+        <!-- Links -->
+        <div class="collapse navbar-collapse justify-content-end links" id="navbarText">
+            <ul class="navbar-nav gap-3 text-center text-lg-end">
+                <li class="nav-item">
+                    <a href="{% url 'listadoComites' %}" class="link-header"><b>Listado</b></a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'logout' %}" class="link-header"><b>Cerrar sesión</b></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

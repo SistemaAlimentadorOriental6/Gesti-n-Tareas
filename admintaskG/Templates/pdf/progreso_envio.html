@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5 mb-5" style="min-height: 50vh;">
+    <h4>Enviando correos para el comité...</h4>
+    <div class="progress mt-3" style="height: 30px;">
+        <div id="barraProgreso" class="progress-bar progress-bar-striped progress-bar-animated"
+             role="progressbar" style="width: 0%;">0%</div>
+    </div>
+    <div class="row mt-4" id="listaResultados"></div>
+</div>
+
+<script>
+     function iniciarEnvio() {
+        fetch("{% url 'enviar_pdf_individualizado' comite_id %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(res => res.json())
+        .catch(err => console.error("Error iniciando envío:", err));
+    }
+
+    // Actualiza la barra de progreso y lista de resultados
+    function actualizarProgreso() {
+        fetch("{% url 'obtener_estado_envio' %}")
+            .then(res => res.json())
+            .then(data => {
+                let barra = document.getElementById("barraProgreso");
+                barra.style.width = data.progreso + "%";
+                barra.textContent = data.progreso + "%";
+
+                let lista = document.getElementById("listaResultados");
+                lista.innerHTML = "";
+
+                data.resultados.forEach(item => {
+                    let div = document.createElement("div");
+                    div.className = "col-md-6 mb-3";
+
+                    let card = `
+                        <div class="card shadow-sm border-left-success">
+                            <div class="card-body">
+                                <h5 class="card-title">${item.estado}</h5>
+                                <p class="card-text">
+                                    <strong>Correo:</strong> ${item.correo}<br>
+                                    <strong>Responsable:</strong> ${item.responsable || '-'}<br>
+                                    ${item.tareas !== undefined ? `
+                                        <strong>Tareas:</strong> ${item.tareas}<br>
+                                        <strong>Subtareas:</strong> ${item.subtareas}<br>
+                                        <strong>Subadicionales:</strong> ${item.subadicionales}
+                                    ` : ''}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    div.innerHTML = card;
+                    lista.appendChild(div);
+                });
+
+                if (data.progreso < 100) {
+                    setTimeout(actualizarProgreso, 1000);
+                }
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        iniciarEnvio();
+        actualizarProgreso();
+    });
+</script>
+{% endblock %}

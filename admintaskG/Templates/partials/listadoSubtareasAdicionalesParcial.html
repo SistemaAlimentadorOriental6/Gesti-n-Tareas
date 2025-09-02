@@ -1,0 +1,143 @@
+<div class="card shadow border-0 mb-5">
+    <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: #6ba43a; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+        <h5 class="mb-0 text-center">Subtareas Adicionales de: {{ subtarea.descripcion_subtarea }}</h5>
+        <button class="btn btn-light btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAgregarSubtareaAdicional" style="border-radius: 1rem;">
+            +
+        </button>
+    </div>
+
+    <div class="card-body p-0 border-black">
+        {% if subtareasadicionales %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+
+                <div class="d-flex justify-content-end align-items-center p-3">
+                    <label for="filtroEstadoAdic" class="me-2 fw-bold mb-0">Filtrar por estado:</label>
+                    <select id="filtroEstadoAdic" class="form-select border-dark" style="max-width: 200px;">
+                        <option value="">Todos</option>
+                        <option value="pendiente">Pendientes</option>
+                        <option value="completado">Completadas</option>
+                    </select>
+                </div>
+
+                <thead style="background-color: #6ba43a;" class="text-white">
+                    <tr class="text-center">
+                        <th class="text-nowrap">#</th>
+                        <th class="text-nowrap">Fecha Inicio</th>
+                        <th class="text-nowrap">Fecha Cierre</th>
+                        <th class="text-nowrap">Descripción Subtarea Adicionales</th>
+                        <th class="text-nowrap">Subtarea Principal</th>
+                        <th class="text-nowrap">Responsable</th>   
+                        <th class="text-nowrap">Correo</th>   
+                        <th class="text-nowrap">Acción</th>   
+
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subtareasadicionales %}
+                    <tr class="text-center table-row-hover fila-subadicional" data-subadicional-id="{{ sub.id }}" data-estadoadic="{% if sub.estado == 1 %}completado{% else %}pendiente{% endif %}">
+                        <td class="text-nowrap">{{ sub.id }}</td>
+                        <td class="text-nowrap">{{ sub.fecha_inicio|date:"d/m/Y" }}</td>
+
+                        <td class="text-nowrap fecha-cierre">
+                            {% if t.fecha_cierre %}
+                                {{ t.fecha_cierre|date:"d/m/Y" }}
+                            {% else %}
+                                En curso
+                            {% endif %}
+                        </td>
+
+                        <td>{{ sub.descripcion_subtarea_adicional }}</td>
+
+                        <td>{{ sub.subtarea.descripcion_subtarea }}</td>
+                        <td class="text-nowrap">{{ sub.responsable }}</td>
+                        <td class="estado-texto">
+                            {{ sub.correo_responsable }}
+                        </td>
+                        
+                        <td class="text-center">
+                            {% if sub.estado == 1 %}
+                                <i class="fas fa-circle-check estado-icono-adic"
+                                   data-id="{{ sub.id }}"
+                                   data-tipo="adicional"
+                                   style="color: #5a9633; font-size: 1.2rem; cursor: pointer;"
+                                   title="Completado"></i>
+                            {% else %}
+                                <i class="fas fa-circle-minus estado-icono-adic"
+                                   data-id="{{ sub.id }}"
+                                   data-tipo="adicional"
+                                   style="color: orange; font-size: 1.2rem; cursor: pointer;"
+                                   title="En curso"></i>
+                            {% endif %}
+                        </td>
+                     
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+            <i class="bi bi-info-circle-fill"></i> No hay subtareas adicionales registradas
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+
+
+<div class="modal fade" id="modalAgregarSubtareaAdicional" tabindex="-1" aria-labelledby="modalAgregarSubtareaAdicionalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content formulario-modal">
+
+            <div class="modal-header">
+                <h4 class="modal-title w-100 text-center titulo-modal" id="modalAgregarSubtareaAdicionalLabel">Agregar Nueva Subtarea Adiconal</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <form method="POST" action="{% url 'agregarSubtareaAdicional' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="subtarea_principal" class="form-label">Subtarea Principal</label>
+                        <textarea id="subtarea_principal" name="subtarea_principal" class="form-control border-dark"> {{ subtarea.descripcion_subtarea }} </textarea>
+                        <input type="hidden" name="subtarea_id" value="{{ subtarea.id }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="fecha_inicio_subad" class="form-label">Fecha Inicio</label>
+                        <input type="date" class="form-control border-dark" id="fecha_inicio_subad" name="fecha_inicio_subad" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fecha_cierre" class="form-label">Fecha Cierre</label>
+                        <input type="text" class="form-control border-dark" id="fecha_cierre" name="fecha_cierre" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion_subtarea_adicional" class="form-label">Descripción Subtarea Adiconal</label>
+                        <textarea name="descripcion_subtarea_adicional" id="descripcion_subtarea_adicional" rows="4" class="form-control border-black" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="responsable" class="form-label">Responsable</label>
+                        <input type="text" class="form-control border-dark" id="responsable" name="responsable" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="correo_responsable" class="form-label">Correo</label>
+                        <input type="email" class="form-control border-dark" id="correo_responsable" name="correo_responsable" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-center">
+                    <button type="submit" class="btn btn-success px-5">Guardar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>

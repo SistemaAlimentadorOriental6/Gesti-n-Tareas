@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Listado Tareas{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5" style="min-height: 70vh;">
+    <div class="card shadow border-0 rounded-4">
+        <div class="card-header text-white text-center" style="background-color: #6ba43a; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+            <h5 class="mb-0">Tareas del Comité: {{ comite.descripcion_comite }}</h5>
+        </div>
+    
+        <div class="card-body p-0">
+            {% if tareas %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead style="background-color: #6ba43a;" class="text-white">
+                        <tr class="text-center">
+                            <th class="text-nowrap">ID</th>
+                            <th class="text-nowrap">Fecha Inicio</th>
+                            <th class="text-nowrap">Fecha Cierre</th>
+                            <th class="text-nowrap">Descripción Tarea</th>
+                            <th class="text-nowrap">Comité Encargado</th>
+                            <th class="text-nowrap">Responsable</th>   
+                            <th class="text-nowrap">Estado</th>   
+                            <th class="text-nowrap">Acción</th>   
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in tareas %}
+                        <tr class="text-center table-row-hover">
+                            <td class="text-nowrap">{{ t.id }}</td>
+                            <td class="text-nowrap">{{ t.fecha_inicio|date:"d/m/Y" }}</td>
+
+                            <td class="text-nowrap fecha-cierre">
+                                {% if t.fecha_cierre %}
+                                    {{ t.fecha_cierre|date:"d/m/Y" }}
+                                {% else %}
+                                    En curso
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <a href="{% url 'listadoSubtareas' t.id %}" class="link-listado">{{ t.descripcion_tarea }}</a>
+                            </td>
+                            <td class="text-nowrap">{{ t.comite.descripcion_comite }}</td>
+                            <td class="text-nowrap">{{ t.responsable }}</td>
+                            <td class="estado-texto">
+                                {% if t.estado == 1 %}Completa{% else %}Incompleta{% endif %}
+                            </td>
+                            
+                            <td class="text-center">
+                                {% if t.estado == 1 %}
+                                  <i class="fas fa-circle-check estado-icono"
+                                     style="color: #5a9633; font-size: 1.2rem; cursor: pointer;"
+                                     data-id="{{ t.id }}"
+                                     title="Completado"></i>
+                                {% else %}
+                                  <i class="fas fa-circle-minus estado-icono"
+                                     style="color: orange; font-size: 1.2rem; cursor: pointer;"
+                                     data-id="{{ t.id }}"
+                                     title="En curso"></i>
+                                {% endif %}
+                              </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4 text-center text-muted">
+                <i class="bi bi-info-circle-fill"></i> No hay tareas registradas
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="text-center mt-5 mb-5">
+        <button class="btn btn-success px-5" data-bs-toggle="modal" data-bs-target="#modalAgregarTarea">
+            <i class="fa fa-plus b" aria-hidden="true"></i> Agregar Nueva Tarea
+        </button>
+    </div>
+</div>
+
+
+
+<!--Modal para agregar nueva tarea-->
+
+<div class="modal fade" id="modalAgregarTarea" tabindex="-1" aria-labelledby="modalAgregarTareaLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content formulario-modal">
+
+            <div class="modal-header">
+                <h4 class="modal-title w-100 text-center titulo-modal" id="modalAgregarTareaLabel">Agregar Nueva Tarea</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <form method="POST" action="{% url 'agregarTarea' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="comite_encargado" class="form-label">Comité Encargado</label>
+                        <input type="text" class="form-control border-dark" id="comite_encargado" name="comite_encargado" value="{{ comite.descripcion_comite }}" required>
+                        <input type="hidden" name="comite_id" value="{{ comite.id }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                        <input type="date" class="form-control border-dark" id="fecha_inicio" name="fecha_inicio" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fecha_cierre" class="form-label">Fecha Cierre</label>
+                        <input type="text" class="form-control border-dark" id="fecha_cierre" name="fecha_cierre">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion_tarea" class="form-label">Descripción Tarea</label>
+                        <textarea name="descripcion_tarea" id="descripcion_tarea" rows="4" class="form-control border-black"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="responsable" class="form-label">Responsable</label>
+                        <input type="text" class="form-control border-dark" id="responsable" name="responsable" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="correo_responsable" class="form-label">Correo</label>
+                        <input type="email" class="form-control border-dark" id="correo_responsable" name="correo_responsable" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-center">
+                    <button type="submit" class="btn btn-success px-5">Guardar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const modal = document.getElementById('modalAgregarTarea');
+        modal.addEventListener('show.bs.modal', function () {
+            const fechaInput = document.getElementById('fecha_inicio');
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            fechaInput.value = `${yyyy}-${mm}-${dd}`;
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.estado-icono').forEach(function (icono) {
+            icono.addEventListener('click', function () {
+                const tareaId = this.dataset.id;
+                const iconoRef = this;
+    
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¿Quieres cambiar el estado de esta tarea?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#5a9633',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, cambiar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/Tareas/estadoTarea/${tareaId}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            },
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.nuevo_estado === 1) {
+                                // Cambiar a ícono de check verde
+                                iconoRef.classList.remove('fa-circle-minus');
+                                iconoRef.classList.add('fa-circle-check');
+                                iconoRef.style.color = '#5a9633';
+                                iconoRef.title = 'Completado';
+                        
+                                const estadoTexto = iconoRef.closest('tr').querySelector('.estado-texto');
+                                if (estadoTexto) estadoTexto.textContent = 'Completa';
+                        
+                            } else {
+                                // Cambiar a ícono de guion rojo
+                                iconoRef.classList.remove('fa-circle-check');
+                                iconoRef.classList.add('fa-circle-minus');
+                                iconoRef.style.color = 'orange';
+                                iconoRef.title = 'En curso';
+                        
+                                const estadoTexto = iconoRef.closest('tr').querySelector('.estado-texto');
+                                if (estadoTexto) estadoTexto.textContent = 'Incompleta';
+                            }
+
+                            const fila = iconoRef.closest('tr');
+                            const celdaFecha = fila.querySelector('.fecha-cierre');
+                            if (celdaFecha) {
+                                celdaFecha.textContent = data.nueva_fecha || "En curso";
+                            }
+                        
+                            Swal.fire({
+                                title: '¡Estado actualizado!',
+                                icon: 'success',
+                                confirmButtonColor: '#5a9633',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    });
+</script>
+
+
+{% endblock %}

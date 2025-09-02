@@ -1,0 +1,43 @@
+
+.table th,
+.table td { 
+    padding: 0.75rem 1rem;
+}
+
+
+.link-listado {
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 18px;
+    color: #6ba43a;
+}
+
+.link-listado:hover {
+    text-decoration: underline;
+}
+
+
+.boton-pdf{
+    background-color: #6ba43a;
+    border-color: #6ba43a;
+    font-weight: 400;
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+.boton-pdf:hover{
+    background-color: #5a9633;
+    border-color: #5a9633;
+}
+
+
+.border-left-success {
+    border-left: 5px solid #28a745 !important;
+}
+.card h5 {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+.card p {
+    font-size: 0.95rem;
+}

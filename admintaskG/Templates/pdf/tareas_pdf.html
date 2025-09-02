@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            margin: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            background-color: #6ba43a;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .seccion {
+            margin-bottom: 20px;
+        }
+
+        .tarea {
+            border-left: 5px solid #6ba43a;
+            padding: 10px 15px;
+            background-color: #f0f9ec;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+
+        .subtarea {
+            border-left: 4px solid #a3cc84;
+            margin-left: 20px;
+            padding: 8px 15px;
+            background-color: #f8fcf5;
+            border-radius: 5px;
+            margin-top: 8px;
+        }
+
+        .subadicional {
+            margin-left: 40px;
+            padding-left: 10px;
+            border-left: 3px solid #c4ddb0;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .estado-completado {
+            color: green;
+            font-weight: bold;
+        }
+
+        .estado-pendiente {
+            color: red;
+            font-weight: bold;
+        }
+
+        .titulo {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        Informe de Tareas del Comité {{ comite.descripcion_comite }}
+    </div>
+
+    <p><strong>Responsable:</strong> {{ responsable }}</p>
+
+    {% for tarea in tareas %}
+        <div class="tarea">
+            <div class="titulo">📝 Tarea: {{ tarea.descripcion }}</div>
+            <div>Estado:
+                {% if tarea.estado %}
+                    <span class="estado-completado">Completada</span>
+                {% else %}
+                    <span class="estado-pendiente">Pendiente</span>
+                {% endif %}
+                <span>Responsable: {{ tarea.responsable }}</span>
+            </div>
+
+            {% for subtarea in tarea.subtareas %}
+                <div class="subtarea">
+                    <div class="titulo">🔸 Subtarea: {{ subtarea.descripcion }}</div>
+                    <div>Estado:
+                        {% if subtarea.estado %}
+                            <span class="estado-completado">Completada</span>
+                        {% else %}
+                            <span class="estado-pendiente">Pendiente</span>
+                        {% endif %}
+                        <span>Responsable: {{ subtarea.responsable }}</span>
+                    </div>
+
+                    {% for subad in subtarea.subadicionales %}
+                        <div class="subadicional">
+                            ▪️ {{ subad.descripcion }} –
+                            {% if subad.estado %}
+                                <span class="estado-completado">Completada</span>
+                            {% else %}
+                                <span class="estado-pendiente">Pendiente</span>
+                            {% endif %}
+                            <span>Responsable: {{ subad.responsable }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    <div class="footer">
+        Sistema de Gestión de Comités – Generado automáticamente
+    </div>
+
+</body>
+</html>

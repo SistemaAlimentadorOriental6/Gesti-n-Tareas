@@ -1,0 +1,44 @@
+.form-card {
+    max-width: 800px;
+    border: 4px solid #6ba43a;
+    border-radius: 20px;
+    background-color: #f9fdf6;
+    font-size: 19px;
+    width: 40%;
+}
+
+
+.btn-success {
+    background-color: #6ba43a;
+    border-color: #6ba43a;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+.btn-success:hover {
+    background-color: #5a9633;
+    border-color: #5a9633;
+}
+
+.titulo-form{
+    color: #6ba43a;
+    font-weight: bold;
+}
+
+label{
+    font-weight: bold;
+}
+
+.formulario-modal{
+    border: 4px solid #6ba43a;
+    border-radius: 20px;
+    background-color: #f9fdf6;
+    font-size: 19px
+}
+
+@media (max-width: 600px) {
+    .form-card {
+        width: 100%;
+    }
+}

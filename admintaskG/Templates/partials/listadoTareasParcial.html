@@ -1,0 +1,135 @@
+<div class="card shadow border-0 rounded-4 mt-4 tabla-tareas">
+    <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: #6ba43a; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+        <h5 class="mb-0 txt-center">Tareas de la Reunión: {{ comite.descripcion_comite }}</h5>
+        <button class="btn btn-light btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAgregarTarea" style="border-radius: 1rem;">
+            +
+        </button>
+    </div>
+
+    <div class="card-body p-0">
+        {% if tareas %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+
+                <div class="d-flex justify-content-end align-items-center p-3">
+                    <label for="filtroEstado" class="me-2 fw-bold mb-0">Filtrar por estado:</label>
+                    <select id="filtroEstado" class="form-select border-dark" style="max-width: 200px;">
+                        <option value="">Todos</option>
+                        <option value="pendiente">Pendientes</option>
+                        <option value="completado">Completadas</option>
+                    </select>
+                </div>
+
+                <thead style="background-color: #6ba43a;" class="text-white">
+                    <tr class="text-center">
+                        <th class="text-nowrap">#</th>
+                        <th class="text-nowrap">Fecha Inicio</th>
+                        <th class="text-nowrap">Fecha Cierre</th>
+                        <th class="text-nowrap">Descripción Tarea</th>
+                        <th class="text-nowrap">Responsable</th>
+                        <th class="text-nowrap">Correo</th>
+                        <th class="text-nowrap">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tareas %}
+                    <tr class="text-center table-row-hover fila-tarea" data-tarea-id="{{ t.id }}" data-estado="{% if t.estado == 1 %}completado{% else %}pendiente{% endif %}">
+                        <td class="numero-tarea text-nowrap">{{ forloop.counter }}</td>
+                        <td class="text-nowrap">{{ t.fecha_inicio|date:"d/m/Y" }}</td>
+                        <td class="text-nowrap fecha-cierre">
+                            {% if t.fecha_cierre %}
+                                {{ t.fecha_cierre|date:"d/m/Y" }}
+                            {% else %}
+                                En curso
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="link-listado tarea-item" data-id="{{ t.id }}" style="cursor: pointer;">
+                                {{ t.descripcion_tarea }}
+                            </span>
+                        </td>
+                        
+                        <td class="text-nowrap">{{ t.responsable }}</td>
+                        <td class="estado-texto">
+                            {{ t.correo_responsable }}
+                        </td>
+                        <td class="text-center">
+                            {% if t.estado == 1 %}
+                            <i class="fas fa-circle-check estado-icono"
+                               style="color: #5a9633; font-size: 1.2rem; cursor: pointer;"
+                               data-id="{{ t.id }}"
+                               title="Completado"></i>
+                            {% else %}
+                            <i class="fas fa-circle-minus estado-icono"
+                               style="color: orange; font-size: 1.2rem; cursor: pointer;"
+                               data-id="{{ t.id }}"
+                               title="En curso"></i>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+            <i class="bi bi-info-circle-fill"></i> No hay tareas registradas
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para agregar nueva tarea -->
+<div class="modal fade" id="modalAgregarTarea" tabindex="-1" aria-labelledby="modalAgregarTareaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content formulario-modal">
+
+            <div class="modal-header">
+                <h4 class="modal-title w-100 text-center titulo-modal" id="modalAgregarTareaLabel">Agregar Nueva Tarea</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <form id="formAgregarTarea" method="POST" action="{% url 'agregarTarea' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="comite_encargado" class="form-label">Comité Encargado</label>
+                        <input type="text" class="form-control border-dark" id="comite_encargado" name="comite_encargado" value="{{ comite.descripcion_comite }}" required>
+                        <input type="hidden" name="comite_id" value="{{ comite.id }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="fecha_inicio_tarea" class="form-label">Fecha Inicio</label>
+                        <input type="date" class="form-control border-dark" id="fecha_inicio_tarea" name="fecha_inicio_tarea" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fecha_cierre" class="form-label">Fecha Cierre</label>
+                        <input type="text" class="form-control border-dark" id="fecha_cierre" name="fecha_cierre" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion_tarea" class="form-label">Descripción Tarea</label>
+                        <textarea name="descripcion_tarea" id="descripcion_tarea" rows="4" class="form-control border-black" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="responsable" class="form-label">Responsable</label>
+                        <input type="text" class="form-control border-dark" id="responsable" name="responsable" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="correo_responsable" class="form-label">Correo</label>
+                        <input type="email" class="form-control border-dark" id="correo_responsable" name="correo_responsable" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-center">
+                    <button type="submit" class="btn btn-success px-5">Guardar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+

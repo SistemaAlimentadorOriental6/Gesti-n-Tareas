@@ -1,0 +1,1080 @@
+{% extends "base.html" %}
+
+{% block title %}Listado Comités{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-5" style="min-height: 70vh;">
+
+    <div class="card shadow border-0 rounded-4 tabla-comite">
+        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: #6ba43a; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+            <h5 class="mb-0 txt-center">Listado de Reuniones</h5>
+            <button class="btn btn-light btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAgregarComite" style="border-radius: 1rem;">
+                +
+            </button>
+        </div>
+    
+        <div class="card-body p-0">
+            {% if comites %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead style="background-color: #6ba43a;" class="text-white">
+                        <tr class="text-center">
+                            <th>#</th>
+                            <th>Reunión</th>
+                            <th>Creado por</th>
+                            <th>Acciones</th> 
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comite in comites %}
+                        <tr class="text-center fila-comite" data-comite-id="{{ comite.id }}">
+                            <td>{{ forloop.counter }}</td>                              
+                            <td>
+                                <span class="link-listado comite-item" data-id="{{ comite.id }}" style="cursor: pointer;">
+                                    {{ comite.descripcion_comite }}
+                                </span>
+                            </td>
+                            <td>{{ comite.creador.first_name }}</td>
+                            <td>
+                                <form id="formEnviarPDF" data-comite-id="{{ comite.id }}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success boton-pdf">
+                                        <span class="d-none d-sm-inline">Enviar Excel</span>
+                                        <i class="fas fa-file-excel d-inline d-sm-none"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4 text-center text-muted">
+                <i class="bi bi-info-circle-fill"></i> No hay comités registrados.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Contenedor para cargar las tareas del comité seleccionado -->
+    <div id="contenedor-tareas" class="mt-4"></div>
+
+    <!-- Contenedor para cagar las subtareas de la tarea seleccionada -->
+    <div id="contenedor-subtareas" class="mt-4"></div>
+
+    <!-- Contenedor para cagar las subtareas adicionales de la tarea seleccionada -->
+    <div id="contenedor-subtareasadicionales" class="mt-4"></div>
+
+</div>
+
+<div class="modal fade" id="modalAgregarComite" tabindex="-1" aria-labelledby="modalAgregarComiteLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content formulario-modal">
+
+            <div class="modal-header">
+                <h5 class="modal-title w-100 text-center titulo-modal" id="modalAgregarComiteLabel">Agregar Nuevo Comité</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <form method="POST" action="{% url 'agregarComite' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="descripcion_comite" class="form-label">Nombre Comité</label>
+                        <input type="text" class="form-control" id="descripcion_comite" name="descripcion_comite" style="border: 2px solid black;" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-center">
+                    <button type="submit" class="btn btn-success px-5">Guardar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let comiteSeleccionado = null;
+    let responsableFiltroActivo = '';
+
+
+    // Función que se ejecuta cada vez que se carga dinámicamente el contenido de tareas
+    function renumerarFilas(selectorFila, selectorNumero) {
+        let contador = 1;
+        document.querySelectorAll(selectorFila).forEach(fila => {
+            if (fila.style.display !== 'none') {  // Solo renumerar filas visibles
+                const celdaNumero = fila.querySelector(selectorNumero);
+                if (celdaNumero) {
+                    celdaNumero.textContent = contador++;  // Asigna un número consecutivo
+                }
+            }
+        });
+    }
+
+    function inicializarEventosTareas() {
+
+        const filtro = document.getElementById("filtroEstado");
+        if (filtro) {
+            filtro.addEventListener("change", function () {
+                const valor = this.value;
+    
+                document.querySelectorAll(".fila-tarea").forEach(fila => {
+                    const estado = fila.getAttribute("data-estado");
+                    fila.style.display = (!valor || estado === valor) ? "" : "none";
+                });
+            });
+        }
+
+
+        const modal = document.getElementById('modalAgregarTarea');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function () {
+                const fechaInput = document.getElementById('fecha_inicio_tarea');
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                fechaInput.value = `${yyyy}-${mm}-${dd}`;
+            });
+        }
+
+        document.querySelectorAll('.estado-icono').forEach(function (icono) {
+            icono.addEventListener('click', function () {
+                const tareaId = this.dataset.id;
+                const iconoRef = this;
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¿Quieres cambiar el estado de esta tarea?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#5a9633',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, cambiar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/Tareas/estadoTarea/${tareaId}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            },
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            const estadoTexto = iconoRef.closest('tr').querySelector('.estado-texto');
+                            const celdaFecha = iconoRef.closest('tr').querySelector('.fecha-cierre');
+
+                            if (data.nuevo_estado === 1) {
+                                iconoRef.classList.remove('fa-circle-minus');
+                                iconoRef.classList.add('fa-circle-check');
+                                iconoRef.style.color = '#5a9633';
+                                iconoRef.title = 'Completado';
+                                if (estadoTexto) estadoTexto.textContent = 'Completa';
+                            } else {
+                                iconoRef.classList.remove('fa-circle-check');
+                                iconoRef.classList.add('fa-circle-minus');
+                                iconoRef.style.color = 'orange';
+                                iconoRef.title = 'En curso';
+                                if (estadoTexto) estadoTexto.textContent = 'Incompleta';
+                            }
+
+                            if (celdaFecha) {
+                                celdaFecha.textContent = data.nueva_fecha || "En curso";
+                            }
+
+                            Swal.fire({
+                                title: '¡Estado actualizado!',
+                                icon: 'success',
+                                confirmButtonColor: '#5a9633',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    }
+
+    function inicializarEventosSubtareas() {
+
+        const filtroSub = document.getElementById("filtroEstadoSub");
+        if (filtroSub) {
+            filtroSub.addEventListener("change", function () {
+                const valorSub = this.value;
+    
+                document.querySelectorAll(".fila-subtarea").forEach(fila => {
+                    const estadoSub = fila.getAttribute("data-estadosub");
+                    fila.style.display = (!valorSub || estadoSub === valorSub) ? "" : "none";
+                });
+            });
+        }
+
+        const modal = document.getElementById('modalAgregarSubtarea');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function () {
+                const fechaInput = document.getElementById('fecha_inicio_sub');
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                fechaInput.value = `${yyyy}-${mm}-${dd}`;
+            });
+        }
+
+        document.querySelectorAll('.estado-icono-sub').forEach(function (icono) {
+            icono.addEventListener('click', function () {
+                const subtareaId = this.dataset.id;
+                const iconoRef = this;
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¿Quieres cambiar el estado de esta tarea?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#5a9633',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, cambiar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/Subtareas/estadoSubtarea/${subtareaId}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            },
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            const estadoTexto = iconoRef.closest('tr').querySelector('.estado-texto');
+                            const celdaFecha = iconoRef.closest('tr').querySelector('.fecha-cierre');
+
+                            if (data.nuevo_estado === 1) {
+                                iconoRef.classList.remove('fa-circle-minus');
+                                iconoRef.classList.add('fa-circle-check');
+                                iconoRef.style.color = '#5a9633';
+                                iconoRef.title = 'Completado';
+                                if (estadoTexto) estadoTexto.textContent = 'Completa';
+                            } else {
+                                iconoRef.classList.remove('fa-circle-check');
+                                iconoRef.classList.add('fa-circle-minus');
+                                iconoRef.style.color = 'orange';
+                                iconoRef.title = 'En curso';
+                                if (estadoTexto) estadoTexto.textContent = 'Incompleta';
+                            }
+
+                            if (celdaFecha) {
+                                celdaFecha.textContent = data.nueva_fecha || "En curso";
+                            }
+
+                            Swal.fire({
+                                title: '¡Estado actualizado!',
+                                icon: 'success',
+                                confirmButtonColor: '#5a9633',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    }
+
+
+    function inicializarEventosSubtareasAdic() {
+
+        const filtroAdic = document.getElementById("filtroEstadoAdic");
+        if (filtroAdic) {
+            filtroAdic.addEventListener("change", function () {
+                const valorAdic = this.value;
+    
+                document.querySelectorAll(".fila-subadicional").forEach(fila => {
+                    const estadoAdic = fila.getAttribute("data-estadoadic");
+                    fila.style.display = (!valorAdic || estadoAdic === valorAdic) ? "" : "none";
+                });
+            });
+        }
+
+
+        const modal = document.getElementById('modalAgregarSubtareaAdicional');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function () {
+                const fechaInput = document.getElementById('fecha_inicio_subad');
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                fechaInput.value = `${yyyy}-${mm}-${dd}`;
+            });
+        }
+
+        document.querySelectorAll('.estado-icono-adic').forEach(function (icono) {
+            icono.addEventListener('click', function () {
+                const subtareaadicionalId = this.dataset.id;
+                const iconoRef = this;
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¿Quieres cambiar el estado de esta tarea?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#5a9633',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, cambiar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/SubtareasAdicionales/estadoSubtareaAdicional/${subtareaadicionalId}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            },
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            const estadoTexto = iconoRef.closest('tr').querySelector('.estado-texto');
+                            const celdaFecha = iconoRef.closest('tr').querySelector('.fecha-cierre');
+
+                            if (data.nuevo_estado === 1) {
+                                iconoRef.classList.remove('fa-circle-minus');
+                                iconoRef.classList.add('fa-circle-check');
+                                iconoRef.style.color = '#5a9633';
+                                iconoRef.title = 'Completado';
+                                if (estadoTexto) estadoTexto.textContent = 'Completa';
+                            } else {
+                                iconoRef.classList.remove('fa-circle-check');
+                                iconoRef.classList.add('fa-circle-minus');
+                                iconoRef.style.color = 'orange';
+                                iconoRef.title = 'En curso';
+                                if (estadoTexto) estadoTexto.textContent = 'Incompleta';
+                            }
+
+                            if (celdaFecha) {
+                                celdaFecha.textContent = data.nueva_fecha || "En curso";
+                            }
+
+                            Swal.fire({
+                                title: '¡Estado actualizado!',
+                                icon: 'success',
+                                confirmButtonColor: '#5a9633',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    }
+
+
+
+    function toggleFiltroResponsable(mostrar, comiteId = null) {
+        let filtroContainer = document.getElementById('filtro-responsable-container');
+        
+        if (mostrar && !filtroContainer) {
+            // Crear el campo de filtro
+            const filtroHTML = `
+                <div id="filtro-responsable-container" 
+                    class="card shadow border-0 rounded-4 mt-4">
+
+                    <!-- Encabezado -->
+                    <div class="card-header" 
+                        style="background: linear-gradient(135deg, #6ba43a, #7cb847); color: white; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+                        <h6 class="mb-0 d-flex align-items-center">
+                            Filtrar por Responsable
+                        </h6>
+                    </div>
+
+                    <!-- Cuerpo -->
+                    <div class="card-body bg-light" style="border-bottom-left-radius: 1rem; border-bottom-right-radius: 1rem;">
+                        <div class="row g-3 align-items-end">
+
+                            <!-- Input ocupa todo en móvil y 8/12 en escritorio -->
+                            <div class="col-12 col-md-8">
+                                <label for="inputResponsable" class="form-label text-muted fw-bold">
+                                    Nombre del responsable
+                                </label>
+                                <input type="text" 
+                                    id="inputResponsable" 
+                                    class="form-control" 
+                                    placeholder="Ej: Jhonatan Usuga, Melisa Rojas..."
+                                    style="border: 2px solid #6ba43a; border-radius: 0.5rem; box-shadow: 0 0 0 0.1rem rgba(107, 164, 58, 0.1);">
+                            </div>
+
+                            <!-- Botones: apilan en móvil, horizontal en escritorio -->
+                            <div class="col-12 col-md-4">
+                                <div class="d-flex flex-column flex-md-row gap-2">
+                                    <button id="btnFiltrar" 
+                                            class="btn btn-sm w-100" 
+                                            style="background: linear-gradient(135deg, #6ba43a, #7cb847); border: none; color: white; border-radius: 0.5rem; font-weight: 600; box-shadow: 0 4px 8px rgba(107, 164, 58, 0.3);">
+                                        <i class="bi bi-search me-1"></i>
+                                        Filtrar
+                                    </button>
+                                    <button id="btnLimpiarFiltro" 
+                                            class="btn btn-outline-secondary btn-sm w-100" 
+                                            style="border-radius: 0.5rem; font-weight: 600;"
+                                            title="Limpiar filtro">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Texto informativo -->
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Se mostrarán todas las tareas, subtareas y subtareas adicionales asignadas a esta persona.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Insertar después de la tabla de comités
+            document.querySelector('.tabla-comite').insertAdjacentHTML('afterend', filtroHTML);
+            
+            // Agregar eventos al campo de filtro
+            const inputResponsable = document.getElementById('inputResponsable');
+            const btnFiltrar = document.getElementById('btnFiltrar');
+            const btnLimpiarFiltro = document.getElementById('btnLimpiarFiltro');
+            
+            // Filtrar al hacer clic en el botón
+            btnFiltrar.addEventListener('click', function() {
+                const responsable = inputResponsable.value.trim();
+                if (responsable) {
+                    filtrarPorResponsable(comiteId, responsable);
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campo requerido',
+                        text: 'Por favor ingrese el nombre del responsable',
+                        confirmButtonColor: '#6ba43a'
+                    });
+                }
+            });
+            
+            // Filtrar al presionar Enter
+            inputResponsable.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    btnFiltrar.click();
+                }
+            });
+            
+            // Limpiar filtro
+            btnLimpiarFiltro.addEventListener('click', function() {
+                limpiarFiltroResponsable(comiteId);
+            });
+            
+        } else if (!mostrar && filtroContainer) {
+            // Ocultar el campo de filtro
+            filtroContainer.remove();
+        }
+    }
+    
+    // Función para filtrar por responsable
+    function filtrarPorResponsable(comiteId, responsable) {
+        // Mostrar indicador de carga
+        const btnFiltrar = document.getElementById('btnFiltrar');
+        const textoOriginal = btnFiltrar.innerHTML;
+        btnFiltrar.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Filtrando...';
+        btnFiltrar.disabled = true;
+        
+        responsableFiltroActivo = responsable;
+        
+        // Realizar petición AJAX
+        $.get(`/ajax/filtrar/${comiteId}/`, { responsable: responsable })
+            .done(function(data) {
+                // Limpiar contenedores existentes
+                $("#contenedor-tareas").empty();
+                $("#contenedor-subtareas").empty();
+                $("#contenedor-subtareasadicionales").empty();
+                
+                // Cargar el resultado filtrado
+                $("#contenedor-tareas").html(data);
+                
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Filtro aplicado',
+                    text: `Mostrando resultados para: ${responsable}`,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            })
+            .fail(function(xhr) {
+                console.error('Error al filtrar:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al filtrar',
+                    text: 'No se pudo aplicar el filtro. Inténtalo nuevamente.',
+                    confirmButtonColor: '#6ba43a'
+                });
+            })
+            .always(function() {
+                // Restaurar botón
+                btnFiltrar.innerHTML = textoOriginal;
+                btnFiltrar.disabled = false;
+            });
+    }
+    
+    // Función para limpiar el filtro por responsable
+    function limpiarFiltroResponsable(comiteId) {
+        // Limpiar el input
+        document.getElementById('inputResponsable').value = '';
+        responsableFiltroActivo = '';
+        
+        // Cargar las tareas normalmente (sin filtro)
+        $.get("/ajax/tareas/" + comiteId + "/", function(data) {
+            $("#contenedor-tareas").html(data);
+            $("#contenedor-subtareas").empty();
+            $("#contenedor-subtareasadicionales").empty();
+            inicializarEventosTareas();
+            
+            // Mostrar mensaje de confirmación
+            Swal.fire({
+                icon: 'info',
+                title: 'Filtro eliminado',
+                text: 'Mostrando todas las tareas del comité',
+                timer: 2000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        }).fail(function(xhr) {
+            console.error('Error al limpiar filtro:', xhr);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se pudo limpiar el filtro. Inténtalo nuevamente.',
+                confirmButtonColor: '#6ba43a'
+            });
+        });
+    }
+
+
+
+
+    $(document).ready(function () {
+        // Clic en comité → cargar tareas
+        $(document).on("click", ".comite-item", function () {
+            const comiteId = $(this).data("id");
+            comiteSeleccionado = comiteId; // Guardar el comité seleccionado
+        
+            // Ocultar todas las filas excepto la seleccionada
+            $(".fila-comite").each(function () {
+                const filaId = $(this).data("comite-id");
+                if (filaId !== comiteId) {
+                    $(this).hide();
+                }
+            });
+        
+            // Mostrar botón para volver
+            if ($("#btnMostrarTodos").length === 0) {
+                const botonVolver = `<div class="text-center my-3">
+                    <button id="btnMostrarTodos" class="btn btn-success boton-pdf">Mostrar todos los comités</button>
+                </div>`;
+                $(".tabla-comite").prepend(botonVolver);
+            }
+        
+            // *** AGREGAR ESTA LÍNEA: Mostrar el filtro por responsable ***
+            toggleFiltroResponsable(true, comiteId);
+        
+            // Cargar tareas vía AJAX
+            $.get("/ajax/tareas/" + comiteId + "/", function (data) {
+                $("#contenedor-tareas").html(data);
+                $("#contenedor-subtareas").empty();
+                $("#contenedor-subtareasadicionales").empty();
+                inicializarEventosTareas();
+                
+                // Llamar a la función para actualizar los números de fila
+                actualizarNumeros();
+            });
+        });
+        
+        // Función para actualizar los números de la columna "#"
+        function actualizarNumeros() {
+            let index = 1;
+            $(".fila-comite:visible").each(function () {
+                $(this).find("td:first").text(index);  // Actualiza el número de la fila
+                index++;
+            });
+        }
+        
+        // Mostrar todas las filas nuevamente
+        $(document).on("click", "#btnMostrarTodos", function () {
+            $(".fila-comite").show();
+            $(this).parent().remove();  // Elimina el botón
+            $("#contenedor-tareas").empty();
+            $("#contenedor-subtareas").empty();
+            $("#contenedor-subtareasadicionales").empty();
+            
+            // *** AGREGAR ESTA LÍNEA: Ocultar el filtro por responsable ***
+            toggleFiltroResponsable(false);
+            comiteSeleccionado = null;
+            
+            // Llamar a la función para restaurar la numeración consecutiva
+            actualizarNumeros();
+        });
+
+        
+        // Clic en tarea → cargar subtareas
+        $(document).on("click", ".tarea-item", function () {
+            const tareaId = $(this).data("id");
+        
+            // Ocultar todas las filas excepto la seleccionada
+            $(".fila-tarea").each(function () {
+                const filaId = $(this).data("tarea-id");
+                if (filaId !== tareaId) {
+                    $(this).hide();
+                }
+            });
+        
+            // Llamar a la función para renumerar las filas visibles de las tareas
+            renumerarFilas(".fila-tarea", ".numero-tarea");
+        
+            // Mostrar botón para volver a mostrar todas las tareas
+            if ($("#btnMostrarTodasTareas").length === 0) {
+                const boton = `<div class="text-center my-2">
+                    <button id="btnMostrarTodasTareas" class="btn btn-success boton-pdf">Mostrar todas las tareas</button>
+                </div>`;
+                $(".tabla-tareas").prepend(boton);
+            }
+        
+            $.get("/ajax/subtareas/" + tareaId + "/", function (data) {
+                $("#contenedor-subtareas").html(data);
+                $("#contenedor-subtareasadicionales").empty();
+                inicializarEventosSubtareas();
+            });
+        });
+        
+        // Mostrar todas las tareas nuevamente
+        $(document).on("click", "#btnMostrarTodasTareas", function () {
+            $(".fila-tarea").show();  // Muestra todas las filas de tareas
+            $(this).parent().remove();  // Elimina el botón
+        
+            // Llamar a la función para renumerar las tareas
+            renumerarFilas(".fila-tarea", ".numero-tarea");
+        
+            $("#contenedor-subtareas").empty();
+            $("#contenedor-subtareasadicionales").empty();
+        });
+
+
+        $(document).on("click", ".subtarea-item", function () {
+            const subtareaId = $(this).data("id");
+        
+            // Ocultar todas las subtareas excepto la seleccionada
+            $(".fila-subtarea").each(function () {
+                const filaId = $(this).data("subtarea-id");
+                if (filaId !== subtareaId) {
+                    $(this).hide();
+                }
+            });
+        
+            // Llamar a la función para renumerar las subtareas visibles
+            renumerarFilas(".fila-subtarea", ".numero-subtarea");
+        
+            // Mostrar botón para ver todas las subtareas
+            if ($("#btnMostrarTodasSubtareas").length === 0) {
+                const boton = `<div class="text-center my-2">
+                    <button id="btnMostrarTodasSubtareas" class="btn btn-success boton-pdf">Mostrar todas las subtareas</button>
+                </div>`;
+                $(".tabla-subtareas").prepend(boton);
+            }
+        
+            $.get("/ajax/subtareasadicionales/" + subtareaId + "/", function (data) {
+                $("#contenedor-subtareasadicionales").html(data);
+                inicializarEventosSubtareasAdic();
+            });
+        });
+        
+        // Mostrar todas las subtareas nuevamente
+        $(document).on("click", "#btnMostrarTodasSubtareas", function () {
+            $(".fila-subtarea").show();  
+            $(this).parent().remove();  
+        
+            // Llamar a la función para renumerar las subtareas
+            renumerarFilas(".fila-subtarea", ".numero-subtarea");
+        
+            $("#contenedor-subtareasadicionales").empty();
+        });
+    }
+
+    );
+
+
+    $(document).ready(function() {
+        // Establecer fecha actual
+        const today = new Date().toISOString().split('T')[0];
+        $('#fecha_inicio_tarea').val(today);
+    
+        // Cambiar estado tarea
+        $(document).on("click", ".btn-cambiar-estado", function () {
+            const tareaId = $(this).data("tarea-id");
+            const comiteId = $(this).data("comite-id");
+            if (confirm("¿Estás seguro de cambiar el estado de esta tarea?")) {
+                $.get(`/cambiar-estado-tarea/${tareaId}/`, function () {
+                    cargarTareas(comiteId);
+                });
+            }
+        });
+    
+        // Enviar formulario del modal por AJAX
+        $("#formAgregarTarea").submit(function (e) {
+            e.preventDefault();
+            const form = $(this);
+            const comiteId = form.find("input[name='comite_id']").val();
+    
+            $.ajax({
+                type: "POST",
+                url: "{% url 'agregarTarea' %}",
+                data: form.serialize(),
+                success: function () {
+                    $("#modalAgregarTarea").modal("hide");
+                    cargarTareas(comiteId, true);
+                },
+                error: function () {
+                    alert("Error al agregar la tarea.");
+                }
+            });
+        });
+    });
+    
+    function cargarTareas(comiteId, mantenerFiltrado = false) {
+        $.get(`/ajax/tareas/${comiteId}/`, function (data) {
+            $("#contenedor-tareas").html(data);
+            $("#contenedor-subtareas").empty();
+            $("#contenedor-subtareasadicionales").empty();
+    
+            inicializarEventosTareas();
+    
+            if (mantenerFiltrado) {
+                // Oculta otros comités
+                $(".fila-comite").each(function () {
+                    const filaId = $(this).data("comite-id");
+                    if (filaId !== comiteId) {
+                        $(this).hide();
+                    }
+                });
+    
+                // Mostrar botón "Mostrar todos" si no está presente
+                if ($("#btnMostrarTodos").length === 0) {
+                    const botonVolver = `<div class="text-center my-3">
+                        <button id="btnMostrarTodos" class="btn btn-success boton-pdf">Mostrar todos los comités</button>
+                    </div>`;
+                    $(".tabla-comite").prepend(botonVolver);
+                }
+            }
+        });
+    }
+
+
+    $(document).on("submit", "#formEnviarPDF", function (e) {
+        e.preventDefault();
+        const comiteId = $(this).data("comite-id");
+        const csrfToken = $(this).find("input[name=csrfmiddlewaretoken]").val();
+        const boton = $(this).find('.boton-pdf');
+        boton.prop('disabled', true).text('Procesando...');
+    
+        Swal.fire({
+            title: '<span style="color: #6ba43a; font-weight: bold;">📧 Enviando correos individualizados</span>',
+            html: `
+                <style>
+                    .progress-corporativo {
+                        background-color: #e9f5e1 !important;
+                        border: 2px solid #6ba43a;
+                        box-shadow: 0 2px 8px rgba(107, 164, 58, 0.2);
+                    }
+                    .progress-bar-corporativo {
+                        background: linear-gradient(45deg, #6ba43a, #7cb847) !important;
+                        box-shadow: inset 0 1px 2px rgba(255,255,255,0.3);
+                        color: white !important;
+                        font-weight: bold;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                    }
+                    .resumen-corporativo {
+                        background: linear-gradient(135deg, #f8fdf6, #e9f5e1);
+                        border: 1px solid #6ba43a;
+                        border-radius: 12px;
+                        padding: 15px;
+                        box-shadow: 0 2px 10px rgba(107, 164, 58, 0.1);
+                    }
+                    .contador-corporativo {
+                        background: white;
+                        border-radius: 8px;
+                        padding: 8px;
+                        box-shadow: 0 1px 3px rgba(107, 164, 58, 0.2);
+                    }
+                    .card-corporativo-exitoso {
+                        border-left: 4px solid #6ba43a !important;
+                        background: linear-gradient(to right, #f8fdf6, white);
+                        box-shadow: 0 2px 4px rgba(107, 164, 58, 0.1);
+                    }
+                    .card-corporativo-error {
+                        border-left: 4px solid #dc3545 !important;
+                        background: linear-gradient(to right, #fdf8f8, white);
+                        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.1);
+                    }
+                    .scroll-corporativo {
+                        scrollbar-width: thin;
+                        scrollbar-color: #6ba43a #e9f5e1;
+                    }
+                    .scroll-corporativo::-webkit-scrollbar {
+                        width: 8px;
+                    }
+                    .scroll-corporativo::-webkit-scrollbar-track {
+                        background: #e9f5e1;
+                        border-radius: 4px;
+                    }
+                    .scroll-corporativo::-webkit-scrollbar-thumb {
+                        background: #6ba43a;
+                        border-radius: 4px;
+                    }
+                    .estado-actual-corporativo {
+                        color: #6ba43a !important;
+                        font-weight: 500;
+                        background: #f8fdf6;
+                        padding: 8px 12px;
+                        border-radius: 20px;
+                        border: 1px solid #e9f5e1;
+                    }
+                </style>
+                <div class="mb-3">
+                    <div class="progress progress-corporativo" style="height: 28px; border-radius: 14px;">
+                        <div id="barraProgreso" 
+                             class="progress-bar progress-bar-striped progress-bar-animated progress-bar-corporativo" 
+                             role="progressbar" 
+                             style="width: 0%; border-radius: 14px; transition: width 0.6s ease;">
+                            0%
+                        </div>
+                    </div>
+                    <small id="estadoActual" class="estado-actual-corporativo mt-3 d-block text-center">
+                        🚀 Iniciando proceso...
+                    </small>
+                </div>
+                <div class="mt-4">
+                    <div id="resumenEnvio" class="mb-3 resumen-corporativo" style="display: none;">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="contador-corporativo">
+                                    <h5 style="color: #6ba43a; margin: 0;" id="exitosos">0</h5>
+                                    <small style="color: #6ba43a; font-weight: 500;">✅ Exitosos</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="contador-corporativo">
+                                    <h5 class="text-danger mb-0" id="errores">0</h5>
+                                    <small class="text-danger" style="font-weight: 500;">❌ Errores</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="contador-corporativo">
+                                    <h5 style="color: #6ba43a; margin: 0;" id="total">0</h5>
+                                    <small style="color: #6ba43a; font-weight: 500;">📊 Total</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="historialCorreos" class="scroll-corporativo" style="max-height: 350px; overflow-y: auto;"></div>
+                </div>
+            `,
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            width: '650px',
+            background: '#fefffe',
+            customClass: {
+                popup: 'animated fadeIn',
+                title: 'swal-title-corporativo'
+            },
+            didOpen: () => {
+                iniciarEnvioCorreos(comiteId, csrfToken, boton);
+            }
+        });
+    });
+    
+    function iniciarEnvioCorreos(comiteId, csrfToken, boton) {
+        // Iniciar el proceso de envío
+        fetch(`/pdf/${comiteId}/enviar-pdf/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'iniciado') {
+                // Comenzar a monitorear el progreso
+                monitorearprogreso(boton);
+            } else {
+                mostrarError('Error al iniciar el proceso de envío', boton);
+            }
+        })
+        .catch(err => {
+            console.error("Error iniciando envío:", err);
+            mostrarError('Error de conexión al iniciar el envío', boton);
+        });
+    }
+    
+    function monitorearprogreso(boton) {
+        const intervalo = setInterval(() => {
+            fetch("/tareas/estado-envio/")
+                .then(res => res.json())
+                .then(data => {
+                    actualizarInterfaz(data);
+                    
+                    if (data.completado || data.error) {
+                        clearInterval(intervalo);
+                        finalizarProceso(data, boton);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error obteniendo progreso:", err);
+                    clearInterval(intervalo);
+                    mostrarError('Error al obtener el progreso', boton);
+                });
+        }, 1000); 
+    }
+    
+    function actualizarInterfaz(data) {
+        // Actualizar barra de progreso
+        const barra = document.getElementById("barraProgreso");
+        const progreso = data.progreso || 0;
+        barra.style.width = progreso + "%";
+        barra.textContent = progreso + "%";
+        
+        // Actualizar estado actual
+        const estadoActual = document.getElementById("estadoActual");
+        if (data.estado_actual) {
+            estadoActual.textContent = data.estado_actual;
+        }
+        
+        if (data.total > 0) {
+            const resumen = document.getElementById("resumenEnvio");
+            resumen.style.display = "block";
+            
+            const exitosos = data.resultados.filter(r => r.estado.includes("✅")).length;
+            const errores = data.resultados.filter(r => r.estado.includes("❌")).length;
+            
+            document.getElementById("exitosos").textContent = exitosos;
+            document.getElementById("errores").textContent = errores;
+            document.getElementById("total").textContent = data.total;
+        }
+        
+        const historial = document.getElementById("historialCorreos");
+        historial.innerHTML = "";
+        
+        if (data.resultados && data.resultados.length > 0) {
+            data.resultados.forEach(item => {
+                const esExitoso = item.estado.includes("✅");
+                const iconColor = esExitoso ? 'text-success' : 'text-danger';
+                const borderColor = esExitoso ? 'border-success' : 'border-danger';
+                
+                const div = document.createElement('div');
+                div.className = `card mb-2`;
+                div.classList.add(esExitoso ? 'card-corporativo-exitoso' : 'card-corporativo-error');
+                
+                div.innerHTML = `
+                    <div class="card-body py-3 px-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="${esExitoso ? 'text-success' : 'text-danger'} fw-bold me-2" style="${esExitoso ? 'color: #6ba43a !important;' : ''}">${item.estado}</span>
+                                    ${item.timestamp ? `<small class="text-muted bg-light px-2 py-1 rounded">${item.timestamp}</small>` : ''}
+                                </div>
+                                <div class="small" style="line-height: 1.4;">
+                                    <div class="mb-1"><strong style="color: #6ba43a;">📧 Correo:</strong> <span class="text-dark">${item.correo}</span></div>
+                                    ${item.responsable ? `<div class="mb-1"><strong style="color: #6ba43a;">👤 Responsable:</strong> <span class="text-dark">${item.responsable}</span></div>` : ''}
+                                    ${item.tareas ? `<div class="d-flex flex-wrap gap-2 mt-2">
+                                        <span class="badge" style="background-color: #6ba43a; color: white;">📋 ${item.tareas} tareas</span>
+                                        <span class="badge" style="background-color: #7cb847; color: white;">📝 ${item.subtareas || 0} subtareas</span>
+                                        <span class="badge" style="background-color: #8bc653; color: white;">➕ ${item.subadicionales || 0} adicionales</span>
+                                    </div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                historial.appendChild(div);
+            });
+            
+            historial.scrollTop = historial.scrollHeight;
+        }
+    }
+    
+    function finalizarProceso(data, boton) {
+        const barra = document.getElementById("barraProgreso");
+        if (data.error) {
+            barra.className = "progress-bar bg-danger";
+            barra.textContent = "❌ Error en el proceso";
+            barra.style.background = "linear-gradient(45deg, #dc3545, #e55a5a)";
+        } else {
+            barra.className = "progress-bar progress-bar-corporativo";
+            barra.textContent = "✅ 100% - Completado exitosamente";
+            barra.style.background = "linear-gradient(45deg, #6ba43a, #7cb847)";
+        }
+        
+        Swal.update({
+            showConfirmButton: true,
+            confirmButtonText: '✓ Cerrar',
+            confirmButtonColor: data.error ? '#dc3545' : '#6ba43a',
+            customClass: {
+                confirmButton: 'btn-lg'
+            },
+            didDestroy: () => {
+                boton.prop('disabled', false).text('Enviar PDF');
+            }
+        });
+        
+        const estadoActual = document.getElementById("estadoActual");
+        if (data.error) {
+            estadoActual.textContent = `❌ ${data.error}`;
+            estadoActual.className = "text-danger mt-2 d-block fw-bold text-center";
+            estadoActual.style.background = "#fdf2f2";
+            estadoActual.style.border = "1px solid #f5c6cb";
+        } else {
+            const exitosos = data.resultados.filter(r => r.estado.includes("✅")).length;
+            const total = data.total;
+            estadoActual.textContent = `🎉 ¡Proceso completado! ${exitosos}/${total} correos enviados exitosamente`;
+            estadoActual.className = "estado-actual-corporativo mt-2 d-block fw-bold text-center";
+            estadoActual.style.background = "linear-gradient(135deg, #f8fdf6, #e9f5e1)";
+            estadoActual.style.border = "2px solid #6ba43a";
+            estadoActual.style.color = "#6ba43a";
+        }
+    }
+    
+    function mostrarError(mensaje, boton) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: mensaje,
+            confirmButtonColor: '#dc3545'
+        }).then(() => {
+            boton.prop('disabled', false).text('Enviar PDF');
+        });
+    }
+    
+    
+    
+
+</script>
+
+{% endblock %}
