@@ -135,6 +135,10 @@ LOGIN_URL = reverse_lazy('login')
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+STATICFILES_DIRS = [
     BASE_DIR / 'admintaskG/Public',
 ]
 
