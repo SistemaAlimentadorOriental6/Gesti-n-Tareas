@@ -131,13 +131,15 @@ LOGIN_URL = reverse_lazy('login')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-
 STATIC_URL = '/static/'
 
+# Django buscará estáticos dentro de "admintaskG/Public"
 STATICFILES_DIRS = [
-    BASE_DIR / "static",            
-    BASE_DIR / "admintaskG/Public",  
+    BASE_DIR / "admintaskG" / "Public",
 ]
+
+# Aquí Django pondrá TODO cuando hagas collectstatic
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # Default primary key field type
