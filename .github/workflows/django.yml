@@ -30,24 +30,30 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/master'
     needs: test
-    runs-on: self-hosted  # 👈 ahora corre en TU servidor
-
+    runs-on: self-hosted  # 👈 corre en TU servidor
+  
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+  
       - name: Copiar proyecto al directorio de producción
         run: |
           rsync -avz --delete --exclude-from='.rsyncignore' ./ /var/www/Gerencia/Gestion-Tareas/
-
+  
       - name: Instalar dependencias y migrar base de datos
         run: |
           cd /var/www/Gerencia/Gestion-Tareas
+          # 🔹 Crear entorno con Python 3.12 (si no existe)
+          if [ ! -d "env" ]; then
+            python3.12 -m venv env
+          fi
           source env/bin/activate
+          pip install --upgrade pip
           pip install -r requirements.txt
           python manage.py migrate --noinput
           python manage.py collectstatic --noinput
-
+  
       - name: Reiniciar servicio
         run: |
           sudo systemctl restart gestion-tareas.service
+  
