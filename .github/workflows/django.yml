@@ -38,7 +38,7 @@ jobs:
 
       - name: Copiar proyecto al directorio de producción
         run: |
-          rsync -avz --delete ./ /var/www/Gerencia/Gestion-Tareas/
+          rsync -avz --delete --exclude-from='.rsyncignore' ./ /var/www/Gerencia/Gestion-Tareas/
 
       - name: Instalar dependencias y migrar base de datos
         run: |
