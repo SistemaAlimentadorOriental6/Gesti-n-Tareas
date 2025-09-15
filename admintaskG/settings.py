@@ -135,10 +135,8 @@ STATIC_URL = '/static/'
 
 # Django buscará estáticos dentro de "admintaskG/Public"
 STATICFILES_DIRS = [
-    BASE_DIR / 'admintaskG/Public',
+    BASE_DIR / 'Public',
 ]
-
-print(BASE_DIR)
 
 
 # Aquí Django pondrá TODO cuando hagas collectstatic
