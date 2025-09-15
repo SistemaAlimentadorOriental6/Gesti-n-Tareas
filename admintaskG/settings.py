@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY'),
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["192.168.90.33:3015", "192.168.90.33", "localhost", "127.0.0.1"]
 
@@ -135,7 +135,7 @@ STATIC_URL = '/static/'
 
 # Django buscará estáticos dentro de "admintaskG/Public"
 STATICFILES_DIRS = [
-    BASE_DIR / 'Public',
+    BASE_DIR / 'admintaskG/Public',
 ]
 
 
