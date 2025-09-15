@@ -139,7 +139,7 @@ STATICFILES_DIRS = [
 ]
 
 # Aquí Django pondrá TODO cuando hagas collectstatic
-STATIC_ROOT = BASE_DIR / "admintaskG" / "staticfiles"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # Default primary key field type
