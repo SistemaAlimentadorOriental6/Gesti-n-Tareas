@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY'),
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["192.168.90.33:3015", "192.168.90.33", "localhost", "127.0.0.1"]
 
@@ -131,12 +131,15 @@ LOGIN_URL = reverse_lazy('login')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Django buscará estáticos dentro de "admintaskG/Public"
 STATICFILES_DIRS = [
     BASE_DIR / 'admintaskG/Public',
 ]
+
+print(BASE_DIR)
+
 
 # Aquí Django pondrá TODO cuando hagas collectstatic
 STATIC_ROOT = BASE_DIR / 'staticfiles'
