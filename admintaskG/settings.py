@@ -20,6 +20,7 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+print(BASE_DIR)
 
 
 # Quick-start development settings - unsuitable for production
@@ -135,12 +136,15 @@ STATIC_URL = '/static/'
 
 # Django buscará estáticos dentro de "admintaskG/Public"
 STATICFILES_DIRS = [
-    BASE_DIR / 'admintaskG/Public',
+    BASE_DIR / 'admintaskG' / 'Public',
 ]
+
+print(f"El diseño es desarrollo  {STATICFILES_DIRS}")
 
 
 # Aquí Django pondrá TODO cuando hagas collectstatic
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+print(f"Diseño en producción {STATIC_ROOT}")
 
 
 # Default primary key field type
