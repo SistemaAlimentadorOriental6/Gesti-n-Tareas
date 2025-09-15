@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.conf.urls.static import static
+from django.conf import settings
 from django.urls import path
 from admintaskG.views import login, listadoComites, logout_view, agregarComite, agregarTarea, listadoTareas, listadoSubtareas, agregarSubtarea, listadoSubtareasAdicionales, agregarSubtareaAdicional, estadoTarea, estadoSubtarea, estadoSubtareaAdicional, tareas_por_comite, subtareas_por_tarea, subtareasadicionales_por_subtarea, enviar_pdf_individualizado, obtener_estado_envio, filtrar_por_responsable
 
@@ -48,4 +50,4 @@ urlpatterns = [
 
     path('ajax/filtrar/<int:comite_id>/', filtrar_por_responsable, name='filtrar_por_responsable'),
     
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
