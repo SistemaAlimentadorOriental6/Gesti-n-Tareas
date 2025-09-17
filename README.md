@@ -76,53 +76,54 @@ CREATE DATABASE gestiontareas;
 
 USE gestiontareas;
 
-CREATE TABLE `comite` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS `comite` (
+  `id` int NOT NULL AUTO_INCREMENT,
   `descripcion_comite` varchar(100) NOT NULL,
-  `creador_id` int(11) DEFAULT NULL,
+  `creador_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
-  FOREIGN KEY (`creador_id`) REFERENCES `auth_user` (`id`)
-) 
+  KEY `creador_id` (`creador_id`)
+)
 
-CREATE TABLE `tarea` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+
+CREATE TABLE IF NOT EXISTS `tarea` (
+  `id` int NOT NULL AUTO_INCREMENT,
   `estado` int NOT NULL,
+  `comite_id` int DEFAULT NULL,
   `descripcion_tarea` varchar(200) NOT NULL,
   `responsable` varchar(100) NOT NULL,
-  `correo_resonsable` varchar(250) NOT NULL,
+  `correo_responsable` varchar(250) NOT NULL,
   `fecha_inicio` date NOT NULL,
-  `fecha_cierre` date NOT NULL,
-  `comite_id` int(11) DEFAULT NULL,
+  `fecha_cierre` date DEFAULT NULL,
   PRIMARY KEY (`id`),
-  FOREIGN KEY (`comite_id`) REFERENCES `comite` (`id`)
-) 
+  KEY `comite_id` (`comite_id`)
+)
 
-CREATE TABLE `sub_tarea` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `estado` int NOT NULL,
+
+CREATE TABLE IF NOT EXISTS `sub_tarea` (
+  `id` int NOT NULL AUTO_INCREMENT,
   `descripcion_subtarea` varchar(200) NOT NULL,
-  `responsable` varchar(100) NOT NULL,
-  `correo_resonsable` varchar(250) NOT NULL,
-  `fecha_inicio` date NOT NULL,
-  `fecha_cierre` date NOT NULL,
-  `tarea_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  FOREIGN KEY (`tarea_id`) REFERENCES `tarea` (`id`)
-) 
-
-CREATE TABLE `subtarea_adicional` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
   `estado` int NOT NULL,
-  `descripcion_subtarea_adicional` varchar(200) NOT NULL,
+  `tarea_id` int DEFAULT NULL,
   `responsable` varchar(100) NOT NULL,
-  `correo_resonsable` varchar(250) NOT NULL,
+  `correo_responsable` varchar(250) NOT NULL,
   `fecha_inicio` date NOT NULL,
-  `fecha_cierre` date NOT NULL,
-  `subtarea_id` int(11) DEFAULT NULL,
+  `fecha_cierre` date DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `subtarea_id` (`subtarea_id`),
-  FOREIGN KEY (`subtarea_id`) REFERENCES `subtarea` (`id`)
-) 
+  KEY `tarea_id` (`tarea_id`)
+)
+
+  CREATE TABLE IF NOT EXISTS `subtarea_adicional` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `descripcion_subtarea_adicional` varchar(200) NOT NULL,
+    `estado` int NOT NULL,
+    `subtarea_id` int DEFAULT NULL,
+    `responsable` varchar(100) NOT NULL,
+    `correo_responsable` varchar(250) NOT NULL,
+    `fecha_inicio` date NOT NULL,
+    `fecha_cierre` date DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `subtarea_id` (`subtarea_id`)
+  ) 
 
 
 ```
