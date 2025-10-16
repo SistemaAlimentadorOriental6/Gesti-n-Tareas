@@ -38,6 +38,11 @@ ALLOWED_HOSTS = ["192.168.90.33:3015", "192.168.90.33", "localhost", "127.0.0.1"
 
 # Application definition
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://gestion-tareas.sao6.com.co'
+]
+
+
 INSTALLED_APPS = [
     'admintaskG',
     'django.contrib.admin',
