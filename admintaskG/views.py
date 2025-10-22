@@ -75,7 +75,7 @@ def tareas_por_comite(request, comite_id):
     comite = get_object_or_404(Comite, id=comite_id)
     responsable_filtro = request.GET.get('responsable', '').strip()
     
-    tareas = Tareas.objects.filter(comite_id=comite_id)
+    tareas = Tareas.objects.filter(comite_id=comite_id).order_by('-fecha_inicio')
     if responsable_filtro:
         tareas = tareas.filter(responsable__icontains=responsable_filtro)
     
@@ -90,7 +90,7 @@ def subtareas_por_tarea(request, tarea_id):
     tarea = get_object_or_404(Tareas, id=tarea_id)
     responsable_filtro = request.GET.get('responsable', '').strip()
     
-    subtareas = Subtareas.objects.filter(tarea_id=tarea_id)
+    subtareas = Subtareas.objects.filter(tarea_id=tarea_id).order_by('-fecha_inicio')
     if responsable_filtro:
         subtareas = subtareas.filter(responsable__icontains=responsable_filtro)
     
@@ -105,7 +105,7 @@ def subtareasadicionales_por_subtarea(request, subtarea_id):
     subtarea = get_object_or_404(Subtareas, id=subtarea_id)
     responsable_filtro = request.GET.get('responsable', '').strip()
     
-    subtareasadicionales = SubtareasAdicionales.objects.filter(subtarea_id=subtarea_id)
+    subtareasadicionales = SubtareasAdicionales.objects.filter(subtarea_id=subtarea_id).order_by('-fecha_inicio')
     if responsable_filtro:
         subtareasadicionales = subtareasadicionales.filter(responsable__icontains=responsable_filtro)
     
