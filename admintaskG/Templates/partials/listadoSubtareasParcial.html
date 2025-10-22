@@ -26,7 +26,7 @@
                         <th class="text-nowrap">Fecha Inicio</th>
                         <th class="text-nowrap">Fecha Cierre</th>
                         <th class="text-nowrap">Descripción Subtarea</th>
-                        <th class="text-nowrap">Tarea Principal</th>
+                        <!-- <th class="text-nowrap">Tarea Principal</th> -->
                         <th class="text-nowrap">Responsable</th>   
                         <th class="text-nowrap">Correo</th>  
                         <th class="text-nowrap">Acción</th> 
@@ -47,14 +47,14 @@
                             {% endif %}
                         </td>
 
-                        <td>
+                        <td style="width: 500px;">
                             <span class="link-listado subtarea-item" data-id="{{ t.id }}" style="cursor: pointer;">
                                 {{ t.descripcion_subtarea }}
                             </span>
                         </td>
 
-                        <td>{{ t.tarea.descripcion_tarea }}</td>
-                        <td class="text-nowrap">{{ t.responsable }}</td>
+                        <!-- <td>{{ t.tarea.descripcion_tarea }}</td> -->
+                        <td  style="width: 180px;">{{ t.responsable }}</td>
                         <td class="estado-texto">
                             {{ t.correo_responsable }}
                         </td>

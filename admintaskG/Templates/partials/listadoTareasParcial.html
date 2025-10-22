@@ -43,14 +43,14 @@
                                 En curso
                             {% endif %}
                         </td>
-                        <td>
+                        <td style="width: 500px;">
                             <span class="link-listado tarea-item" data-id="{{ t.id }}" style="cursor: pointer;">
                                 {{ t.descripcion_tarea }}
                             </span>
                         </td>
                         
-                        <td class="text-nowrap">{{ t.responsable }}</td>
-                        <td class="estado-texto">
+                        <td style="width: 180px;">{{ t.responsable }}</td>
+                        <td >
                             {{ t.correo_responsable }}
                         </td>
                         <td class="text-center">
