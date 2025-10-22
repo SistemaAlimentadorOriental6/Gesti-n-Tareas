@@ -20,7 +20,7 @@
                             <th class="text-nowrap">Fecha Inicio</th>
                             <th class="text-nowrap">Fecha Cierre</th>
                             <th class="text-nowrap">Descripción Subtarea</th>
-                            <th class="text-nowrap">Tarea Principal</th>
+                            <!-- <th class="text-nowrap">Tarea Principal</th> -->
                             <th class="text-nowrap">Responsable</th>   
                             <th class="text-nowrap">Estado</th>  
                             <th class="text-nowrap">Acción</th> 
@@ -40,12 +40,12 @@
                                 {% endif %}
                             </td>
 
-                            <td>
+                            <td style="width: 500px;">
                                 <a href="{% url 'listadoSubtareasAdicionales' t.id %}" class="link-listado">{{ t.descripcion_subtarea }}</a>
                             </td>
 
-                            <td>{{ t.tarea.descripcion_tarea }}</td>
-                            <td class="text-nowrap">{{ t.responsable }}</td>
+                            <!-- <td>{{ t.tarea.descripcion_tarea }}</td> -->
+                            <td style="width: 180px;">{{ t.responsable }}</td>
                             <td class="estado-texto">
                                 {% if t.estado == 1 %}Completa{% else %}Incompleta{% endif %}
                             </td>

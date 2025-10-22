@@ -20,7 +20,7 @@
                             <th class="text-nowrap">Fecha Inicio</th>
                             <th class="text-nowrap">Fecha Cierre</th>
                             <th class="text-nowrap">Descripción Subtarea Adicionales</th>
-                            <th class="text-nowrap">Tarea Principal</th>
+                            <!-- <th class="text-nowrap">Tarea Principal</th> -->
                             <th class="text-nowrap">Responsable</th>   
                             <th class="text-nowrap">Estado</th>   
                             <th class="text-nowrap">Acción</th>   
@@ -41,10 +41,10 @@
                                 {% endif %}
                             </td>
 
-                            <td>{{ sub.descripcion_subtarea_adicional }}</td>
+                            <td style="width: 500px;">{{ sub.descripcion_subtarea_adicional }}</td>
 
-                            <td>{{ sub.subtarea.descripcion_subtarea }}</td>
-                            <td class="text-nowrap">{{ sub.responsable }}</td>
+                            <!-- <td>{{ sub.subtarea.descripcion_subtarea }}</td> -->
+                            <td style="width: 180px;">{{ sub.responsable }}</td>
                             <td class="estado-texto">
                                 {% if t.estado == 1 %}Completa{% else %}Incompleta{% endif %}
                             </td>
